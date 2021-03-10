@@ -21,10 +21,9 @@ from keras.models import Sequential, save_model, load_model
 from keras.preprocessing.image import ImageDataGenerator
 from keras.optimizers import Adam
 from keras.preprocessing import image
-from keras.preprocessing.image import img_to_array
+from keras.preprocessing.image import img_to_array,save_img
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.model_selection import train_test_split
-
 
 import base64
 from io import BytesIO
@@ -238,32 +237,22 @@ class Tomato_Prediction(Resource):
         try:
 
             data = request.json
-            
-            # model = load_model("Model/Final_Model_Plant.h5")
-            model2 = load_model("Model/model_inception.h5")
-            
-
+            Model_Apple = load_model("Model/Apple_model_inception.h5")
+            # with open('Testing Images/healthy.JPG', "rb") as img_file:
+            #     im_b64=base64.b64encode(img_file.read()).decode('utf-8')
             im_b64=data["image"]
-            im_bytes = base64.b64decode(im_b64)
-            # im_arr is one-dim Numpy array
-            im_arr = np.frombuffer(im_bytes, dtype=np.uint8)  
-            # converted to image object not stored locally
-            img = cv2.imdecode(im_arr, flags=cv2.IMREAD_COLOR)
-            # image path
-            img_path = img 
-           
+            im_bytes = base64.b64decode(im_b64)   # im_bytes is a binary image
+            im_file = BytesIO(im_bytes)  # convert image to file-like object
+            img = Image.open(im_file)   # img is now PIL Image object
+            img = img.resize((224, 224)) 
+            # Preprocessing the image
+            x = image.img_to_array(img)
+            ## Scaling
+            x=x/255
+            x = np.expand_dims(x, axis=0)
+            preds = Model_Apple.predict(x)
+            preds=np.argmax(preds, axis=1)
 
-            # load a single image
-            new_image = load_image(img)
-
-           
-            # check prediction
-            pred2 = model2.predict(new_image,batch_size=1)
-
-            print(pred2)
-
-
-            preds=np.argmax(pred2, axis=1)
             if preds==0:
                 preds="Bacterial_spot"
                 remedies="Once leaf spot has infected your plants, spray with copper fungicide for seven to 10 days. After that, continue to treat every 10 days when weather is dry or every five to seven days when weather is wet. Copper fungicide can also be used preventively after sowing seeds but before moving plants into the garden.Preventive treatments are recommended, as the loss resulting from a bacterial leaf spot infection can be devastating. In addition to preventive copper fungicide treatments, gardeners should ensure their seeds are certified disease-free and soil is sterile, whether you sterilize your own soil or purchase commercial soils. If seeds aren’t sterile, soak them in 1.3% sodium hypochlorite for one minute to sterilize them on your own. Crop rotation and avoiding too-wet conditions are other strategies to prevent leaf spot. Opt for drip irrigation, or water plants at their base instead of from overhead, and do your watering in the morning instead of later in the day."
@@ -287,10 +276,103 @@ class Tomato_Prediction(Resource):
                 preds="Healthy"
                 remedies="If you’re trying to grow the world’s biggest tomato and you have the time to remove all the suckers as your tomato plant grows, then you might want to go ahead and sucker your plants (and be sure to sanitize your tools as you go so you don’t spread diseases)."
 
-
             return{
                 "Predicted result":preds,
                 "remedies":remedies
+            },201
+            
+
+        except Exception as e:
+            logger.exception(e)
+            return {
+                "msg": "Internal Error"
+            }, 500
+
+
+
+
+#Apple Prediction Class
+class Apple_Prediction(Resource):
+
+    def post(self):
+        try:
+
+            data = request.json
+            Model_Apple = load_model("Model/Apple_model_inception.h5")
+            # with open('Testing Images/healthy.JPG', "rb") as img_file:
+            #     im_b64=base64.b64encode(img_file.read()).decode('utf-8')
+            im_b64=data["image"]
+            im_bytes = base64.b64decode(im_b64)   # im_bytes is a binary image
+            im_file = BytesIO(im_bytes)  # convert image to file-like object
+            img = Image.open(im_file)   # img is now PIL Image object
+            img = img.resize((224, 224)) 
+            # Preprocessing the image
+            x = image.img_to_array(img)
+            ## Scaling
+            x=x/255
+            x = np.expand_dims(x, axis=0)
+            preds = Model_Apple.predict(x)
+            preds=np.argmax(preds, axis=1)
+
+            if preds==0:
+                pass_preds="Apple scab"
+            elif preds==1:
+                pass_preds="Apple Black_rot"
+            elif preds==2:
+                pass_preds="Cedar apple rust"
+            else:
+                pass_preds="Healthy"
+
+
+            return{
+                "Predicted result":pass_preds
+                
+            },201
+            
+
+        except Exception as e:
+            logger.exception(e)
+            return {
+                "msg": "Internal Error"
+            }, 500
+
+
+
+
+
+#Cherry Prediction Class
+class Cherry_Prediction(Resource):
+
+    def post(self):
+        try:
+
+            data = request.json
+            Model_Apple = load_model("Model/Cherry_model_inception.h5")
+            # with open('Testing Images/healthy.JPG', "rb") as img_file:
+            #     im_b64=base64.b64encode(img_file.read()).decode('utf-8')
+            im_b64=data["image"]
+            im_bytes = base64.b64decode(im_b64)   # im_bytes is a binary image
+            im_file = BytesIO(im_bytes)  # convert image to file-like object
+            img = Image.open(im_file)   # img is now PIL Image object
+            img = img.resize((224, 224)) 
+            # Preprocessing the image
+            x = image.img_to_array(img)
+            ## Scaling
+            x=x/255
+            x = np.expand_dims(x, axis=0)
+            preds = Model_Apple.predict(x)
+            preds=np.argmax(preds, axis=1)
+
+            if preds==0:
+                pass_preds="Cherry_(including_sour)___Powdery_mildew"
+            elif preds==1:
+                pass_preds="Cherry_(including_sour)___healthy"
+            
+
+
+            return{
+                "Predicted result":pass_preds
+                
             },201
             
 
